@@ -1,0 +1,71 @@
+version: "3.7"
+services:
+  db:
+    image: mariadb:10.4.8
+    restart: always
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_SECRET}
+    volumes:
+      - ./database:/var/lib/mysql
+      - ./mariadb/mariadb.cnf:/etc/mysql/mariadb.cnf
+      - ./mariadb/my.cnf:/etc/mysql/my.cnf
+  fpm:
+    build:
+      context: ./fpm
+    restart: always
+    volumes:
+      - ../www/new_miraesi.kr:/home/www/miraesi.kr
+      - ../www/eng.miraesi.kr:/home/www/eng.miraesi.kr
+      - ../www/bitmos.net:/home/www/bitmos.net
+      - ../www/clen.io:/home/www/clen.io
+      - ../www/web-nesa:/home/www/web-nesa
+    expose:
+      - "9000"
+    environment:
+      - "DB_HOST=db"
+  redmine:
+    image: redmine:4.0.5-passenger
+    restart: always
+    ports:
+      - "8083:3000"
+    environment:
+      - REDMINE_DB_MYSQL=db
+      - REDMINE_DB_PASSWORD=${DB_ROOT_SECRET}
+      - REDMINE_DB_DATABASE=redmine
+    volumes:
+      - ../www/redmine/plugins:/usr/src/redmine/plugins
+      - ../www/redmine/files:/usr/src/redmine/files
+      - ../www/redmine/public/themes:/usr/src/redmine/public/themes
+      - ../www/redmine/public/system:/usr/src/redmine/public/system
+      - ../www/redmine/config/configuration.yml:/usr/src/redmine/config/configuration.yml
+
+      - ../www/bitmos.net/.git:/home/www/bitmos.net/.git
+      - ../www/new_miraesi.kr/.git:/home/www/new_miraesi.kr/.git
+      - ../www/eng.miraesi.kr/.git:/home/www/eng.miraesi.kr/.git
+      - ../www/miraesi.kr/.git:/home/www/miraesi.kr/.git
+      - ../miraesi/quantm/dawningchart/.git:/home/miraesi/quantm/dawningchart/.git
+      - ../miraesi/quantm/dawningindexboard/.git:/home/miraesi/quantm/dawningindexboard/.git
+      - ../miraesi/quantm/quant-m/.git:/home/miraesi/quantm/quant-m/.git
+      - ../miraesi/quantm/quant-m_rewinder/.git:/home/miraesi/quantm/quant-m_rewinder/.git
+      - ../www/raonbit-front/.git:/home/www/raonbit-front/.git
+      - ../www/raonbit-api/.git:/home/www/raonbit-api/.git
+      - ../www/raonbit-walletsync/.git:/home/www/raonbit-walletsync/.git
+  nginx:
+    build:
+      context: ./nginx
+    restart: always
+    ports:
+      - "443:443"
+      - "80:80"
+    volumes:
+      - ../www/new_miraesi.kr:/home/www/miraesi.kr
+      - ../www/eng.miraesi.kr:/home/www/eng.miraesi.kr
+      - ../www/m_invitation:/home/www/m_invitation
+      - ../www/bitmos.net:/home/www/bitmos.net
+      - ../www/admin.miraesi.kr:/home/www/admin.miraesi.kr
+      - ../www/clen.io:/home/www/clen.io
+      - ../www/web-nesa:/home/www/web-nesa
+      - ./nginx/cert:/home/www/cert
+      - ./nginx/log:/var/log/nginx
